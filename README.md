@@ -45,7 +45,7 @@ We explored the association between ADOS scores and (1) the connectivity edges l
 
 This research was supported by Key-Area Research and Development Program of Guangdong Province (2019B030335001), National Social Science Major Project (20&ZD296), Foshan Science and Technology Innovation Projects (2420001004544), Foshan University High-level Talent Start-up Funding (CGZ07508) and Foshan University Student Academic Funding (xsjj202519zrc11 & xsjj202519zrb03).
 
-If problems are welcome to discuss the exchange, E-mail:zhanghuashuang666@gmail.com
+If problems are welcome to discuss the exchange, E-mail:2020010261@m.scnu.edu.cn
 
 # Citation
 If you find this work useful in your research, please consider citing:Correspondence between morphological similarity of the left lateral orbitofrontal cortex and neurotransmitter systems in adolescent males with autism
