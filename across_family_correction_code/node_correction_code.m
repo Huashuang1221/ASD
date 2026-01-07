@@ -1,86 +1,93 @@
-size(Node_para.bin.adeg)
-size(Node_para.bin.abw)
-size(Node_para.bin.aprank)
+%% OFC nodal metrics: covariate-adjusted t-test + Cohen's d (on residuals) + BH-FDR
+% Prerequisites:
+% 1) load Node_para.mat
+% 2) load AGE_IQ_424.mat 
+% 3) ASD = 1:207, TD = 208:424  
 
 roi_OFC = 26;
 idx_ASD = 1:207;
 idx_TD  = 208:424;
 
-metrics_auc = {'adeg','abw','aprank','aeigv','age'}; % 你要哪些就留哪些（字段必须存在）
+% ---- covariates (age + IQ) ----
+cov = AGE_IQ_424(:, [1 2]);  % adjust columns if needed
 
-for i = 1:numel(metrics_auc)
-    met = metrics_auc{i};
-    X = Node_para.bin.(met);     % 424×208
-    v = X(:, roi_OFC);           % 424×1
+% ---- metrics to test (must exist in Node_para.bin) ----
+metrics = {'adeg','abw','aprank','aeigv','age'}; 
 
-    x_ASD = v(idx_ASD);
-    x_TD  = v(idx_TD);
 
-    [~, p_raw, ~, stats] = ttest2(x_ASD, x_TD);
+thr = 0.03:0.02:0.4;  
 
-    sp = sqrt(((numel(x_ASD)-1)*var(x_ASD) + (numel(x_TD)-1)*var(x_TD)) / (numel(x_ASD)+numel(x_TD)-2));
-    d  = (mean(x_ASD) - mean(x_TD)) / sp;
+nM = numel(metrics);
+tval  = nan(nM,1);
+df    = nan(nM,1);
+p_raw = nan(nM,1);
+dval  = nan(nM,1);
 
-    fprintf('%-8s ROI%03d: t=%.2f, df=%d, p=%.6g, d=%.2f\n', met, roi_OFC, stats.tstat, stats.df, p_raw, d);
+for i = 1:nM
+    met = metrics{i};
+    X = Node_para.bin.(met);
+
+    % ---- extract subject-level AUC value for OFC node ----
+    if ndims(X) == 2
+        % assume: sub × node
+        v = X(:, roi_OFC);
+    elseif ndims(X) == 3
+        % assume: thr × sub × node  (common in GRETNA outputs)
+        v = squeeze(trapz(thr, X(:,:,roi_OFC), 1));  % 1×sub
+        v = v(:);
+    else
+        error('Unexpected dimension for Node_para.bin.%s', met);
+    end
+
+    % ---- residualize (remove age + IQ) ----
+    v_res = residualize_covariates(v, cov);
+
+    % ---- group comparison on residuals ----
+    [~, p, ~, stats] = ttest2(v_res(idx_ASD), v_res(idx_TD));
+    p_raw(i) = p;
+    tval(i)  = stats.tstat;
+    df(i)    = stats.df;
+
+    % ---- effect size on residuals ----
+    dval(i) = cohens_d(v_res(idx_ASD), v_res(idx_TD));
 end
 
+% ---- within-family BH-FDR ----
+q_fdr = mafdr(p_raw, 'BHFDR', true);
 
-% 把5个 raw p 收集起来（顺序你自己定，但要和指标名一致）
-p_nodal = [ ...
-    7.38823e-05;   % adeg
-    5.05053e-05;   % abw
-    8.53353e-05;   % aprank
-    4.60081e-04;   % aeigv
-    1.17307e-04];  % age
-
-% BH-FDR 校正（family 内）
-q_nodal = mafdr(p_nodal, 'BHFDR', true);
-
-% 看哪些 survives
-[q_nodal, q_nodal < 0.05]
-
-
-format long g
-[q_nodal, q_nodal<0.05]
-
-
-format long g
-
-metric = {'adeg','abw','aprank','aeigv','age'}';
-
-tval = [-4.00; -4.10; -3.97; -3.53; -3.89];
-df   = [422; 422; 422; 422; 422];
-
-p_raw = p_nodal(:);
-q_fdr = q_nodal(:);
-
-dval = [-0.39; -0.40; -0.39; -0.34; -0.38];  % 你按打印结果填；或把循环里 d 存起来
-
-T = table(metric, tval, df, p_raw, q_fdr, dval);
-
-disp(T)
-
-% 导出补充表
+% ---- export Supplement table ----
+T = table(metrics(:), tval, df, p_raw, q_fdr, dval, ...
+    'VariableNames', {'metric','t','df','p_raw','q_fdr','cohens_d'});
 writetable(T, 'SupTable_OFC_Nodal_FDR.csv');
 
+% ---- cross-family Holm: define a pre-specified primary metric ----
+primary_metric = 'adeg'; % e.g., degree centrality (predefined)
+primary_idx = find(strcmp(metrics, primary_metric), 1);
+p_primary_nodal = p_raw(primary_idx);
 
-p_primary_nodal = 7.38823e-05;  % adeg 的 raw p
-
+% ---- save for downstream Holm script ----
 NodalResults = struct();
-
 NodalResults.family = 'Nodal_OFC';
-
-NodalResults.metric = metric;        % {'adeg','abw',...}
-NodalResults.tval   = tval;
-NodalResults.df     = df;
-NodalResults.p_raw  = p_raw;
-NodalResults.q_fdr  = q_fdr;
-NodalResults.dval   = dval;
-
-% —— 最重要的两行 —— %
-NodalResults.primary_metric = 'adeg';
-NodalResults.p_primary      = p_primary_nodal;  % 7.38823e-05
-
+NodalResults.primary_metric = primary_metric;
+NodalResults.p_primary = p_primary_nodal;
+NodalResults.table = T;
 save('Results_Nodal_OFC.mat', 'NodalResults');
 
+disp(T);
 
+%% -------- local helper functions (MATLAB R2018b supports local functions in scripts) --------
+function resid = residualize_covariates(y, cov)
+    y = y(:);
+    X = [ones(size(cov,1),1), cov];
+    beta = X \ y;
+    resid = y - X * beta;
+end
+
+function d = cohens_d(x1, x2)
+    x1 = x1(:); x2 = x2(:);
+    n1 = numel(x1); n2 = numel(x2);
+    s1 = var(x1, 1);
+    s2 = var(x2, 1);
+    sp = sqrt(((n1-1)*s1 + (n2-1)*s2) / (n1 + n2 - 2));
+    d = (mean(x1) - mean(x2)) / sp;
+end
