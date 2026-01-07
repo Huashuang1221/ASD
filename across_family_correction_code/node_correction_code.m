@@ -75,7 +75,7 @@ save('Results_Nodal_OFC.mat', 'NodalResults');
 
 disp(T);
 
-%% -------- local helper functions (MATLAB R2018b supports local functions in scripts) --------
+
 function resid = residualize_covariates(y, cov)
     y = y(:);
     X = [ones(size(cov,1),1), cov];
@@ -91,4 +91,5 @@ function d = cohens_d(x1, x2)
     sp = sqrt(((n1-1)*s1 + (n2-1)*s2) / (n1 + n2 - 2));
     d = (mean(x1) - mean(x2)) / sp;
 end
+
 
