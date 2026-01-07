@@ -1,4 +1,4 @@
-%% OFC nodal metrics: covariate-adjusted t-test + Cohen's d (on residuals) + BH-FDR
+
 % Prerequisites:
 % 1) load Node_para.mat
 % 2) load AGE_IQ_424.mat 
@@ -91,3 +91,4 @@ function d = cohens_d(x1, x2)
     sp = sqrt(((n1-1)*s1 + (n2-1)*s2) / (n1 + n2 - 2));
     d = (mean(x1) - mean(x2)) / sp;
 end
+
