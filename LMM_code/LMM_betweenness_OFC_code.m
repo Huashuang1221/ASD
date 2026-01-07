@@ -1,9 +1,9 @@
-%% =========================================================
+
 %  LMM: Betweenness centrality (left lateral OFC, ROI=26)
 %  Random intercept: Site
 %  Fixed effects: Group (ASD vs TD) + Age + IQ
 %  MATLAB: R2018b
-%% =========================================================
+
 
 clear; clc;
 
@@ -92,3 +92,4 @@ fprintf('  LMM_betweenness_OFC.mat\n');
 fprintf('  LMM_betweenness_OFC_results.mat\n');
 fprintf('  LMM_betweenness_OFC_results.csv\n');
 fprintf('  LMM_betweenness_OFC_workspace_snapshot.mat\n');
+
