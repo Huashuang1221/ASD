@@ -42,7 +42,7 @@ Given the multi-level nature of the analyses, cross-level correction for multipl
 We explored the association between ADOS scores and (1) the connectivity edges linked to the orbitofrontal cortex (OFC), and (2) the nodal degree centrality of the OFC.
 
 
-Funding
+# Funding
 This research was supported by Key-Area Research and Development Program of Guangdong Province (2019B030335001), National Social Science Major Project (20&ZD296), Foshan Science and Technology Innovation Projects (2420001004544), Foshan University High-level Talent Start-up Funding (CGZ07508) and Foshan University Student Academic Funding (xsjj202519zrc11 & xsjj202519zrb03).
 
 If problems are welcome to discuss the exchange, E-mail:2020010261@m.scnu.edu.cn
